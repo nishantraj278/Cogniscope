@@ -1,0 +1,176 @@
+// Cogniscope - Dementia Prevention & Detection Platform
+// Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  testSessions  TestSession[]
+  reports       Report[]
+  
+  @@map("users")
+}
+
+model TestSession {
+  id              String    @id @default(cuid())
+  userId          String
+  status          TestStatus @default(IN_PROGRESS)
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  totalQuestions  Int       @default(0)
+  answeredCount   Int       @default(0)
+  durationSeconds Int?
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions       Question[]
+  answers         Answer[]
+  report          Report?
+  cognitiveScores CognitiveScore[]
+  
+  @@index([userId])
+  @@index([status])
+  @@map("test_sessions")
+}
+
+model Question {
+  id              String    @id @default(cuid())
+  testSessionId   String
+  questionType    QuestionType
+  questionText    String    @db.Text
+  options         String[]
+  correctAnswer   String?
+  orderIndex      Int
+  category        CognitiveCategory
+  difficulty      Difficulty @default(MEDIUM)
+  createdAt       DateTime  @default(now())
+  
+  testSession     TestSession @relation(fields: [testSessionId], references: [id], onDelete: Cascade)
+  answer          Answer?
+  
+  @@index([testSessionId])
+  @@index([category])
+  @@map("questions")
+}
+
+model Answer {
+  id              String    @id @default(cuid())
+  testSessionId   String
+  questionId      String    @unique
+  userAnswer      String    @db.Text
+  isCorrect       Boolean?
+  responseTime    Int?      // milliseconds
+  confidence      Float?    // 0-1 scale
+  answeredAt      DateTime  @default(now())
+  
+  testSession     TestSession @relation(fields: [testSessionId], references: [id], onDelete: Cascade)
+  question        Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@index([testSessionId])
+  @@index([questionId])
+  @@map("answers")
+}
+
+model Report {
+  id                    String    @id @default(cuid())
+  userId                String
+  testSessionId         String    @unique
+  overallScore          Float
+  riskLevel             RiskLevel
+  cognitiveAge          Int?
+  
+  // Detailed Analysis
+  memoryScore           Float
+  attentionScore        Float
+  executiveFunctionScore Float
+  languageScore         Float
+  visualSpatialScore    Float
+  
+  // AI Generated Content
+  summary               String    @db.Text
+  strengths             String[]
+  concernAreas          String[]
+  recommendations       String[]
+  clinicalIndicators    String[]
+  preventiveSteps       String[]
+  
+  // Metadata
+  generatedAt           DateTime  @default(now())
+  
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testSession           TestSession @relation(fields: [testSessionId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([riskLevel])
+  @@map("reports")
+}
+
+model CognitiveScore {
+  id                String    @id @default(cuid())
+  testSessionId     String
+  category          CognitiveCategory
+  score             Float
+  maxScore          Float
+  percentile        Float?
+  
+  // Detailed metrics
+  accuracy          Float?
+  averageResponseTime Float?
+  consistency       Float?
+  
+  testSession       TestSession @relation(fields: [testSessionId], references: [id], onDelete: Cascade)
+  
+  @@unique([testSessionId, category])
+  @@index([testSessionId])
+  @@map("cognitive_scores")
+}
+
+// Enums
+
+enum TestStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  SEQUENCE
+  PATTERN_RECOGNITION
+}
+
+enum CognitiveCategory {
+  MEMORY_RECALL
+  ATTENTION
+  EXECUTIVE_FUNCTION
+  LANGUAGE_COMPREHENSION
+  VISUAL_SPATIAL
+  PROCESSING_SPEED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+}
