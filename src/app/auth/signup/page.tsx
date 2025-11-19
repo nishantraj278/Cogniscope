@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { motion } from "framer-motion";
 
 export default function SignupPage() {
@@ -57,7 +55,7 @@ export default function SignupPage() {
 
       // Redirect to login
       router.push("/auth/login?registered=true");
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -65,44 +63,60 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Create Account</h1>
-          <p className="text-gray-600">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-black rounded-full mb-6">
+            <span className="text-4xl">🚀</span>
+          </div>
+          <h1 className="text-5xl font-black mb-3">Create Account</h1>
+          <p className="text-lg text-gray-600">
             Start your cognitive health journey today
           </p>
         </div>
 
-        <Card variant="bordered">
-          <CardHeader>
-            <CardTitle>Sign Up</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <div className="p-3 border-2 border-red-600 bg-red-50 text-red-600 text-sm">
-                  {error}
+        {/* Signup Form */}
+        <div className="bg-white rounded-3xl p-10 shadow-lg">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-4 bg-red-50 border-2 border-red-600 rounded-2xl"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚠️</span>
+                  <span className="text-red-600 font-bold">{error}</span>
                 </div>
-              )}
+              </motion.div>
+            )}
 
-              <Input
-                label="Name"
+            <div>
+              <label className="block text-sm font-black uppercase tracking-wide text-gray-700 mb-3">
+                Full Name
+              </label>
+              <input
                 type="text"
                 placeholder="John Doe"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
+                className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-300 rounded-2xl text-lg font-medium focus:border-black focus:outline-none focus:ring-4 focus:ring-black/10 transition-all"
               />
+            </div>
 
-              <Input
-                label="Email"
+            <div>
+              <label className="block text-sm font-black uppercase tracking-wide text-gray-700 mb-3">
+                Email Address
+              </label>
+              <input
                 type="email"
                 placeholder="your@email.com"
                 value={formData.email}
@@ -110,10 +124,15 @@ export default function SignupPage() {
                   setFormData({ ...formData, email: e.target.value })
                 }
                 required
+                className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-300 rounded-2xl text-lg font-medium focus:border-black focus:outline-none focus:ring-4 focus:ring-black/10 transition-all"
               />
+            </div>
 
-              <Input
-                label="Password"
+            <div>
+              <label className="block text-sm font-black uppercase tracking-wide text-gray-700 mb-3">
+                Password
+              </label>
+              <input
                 type="password"
                 placeholder="••••••••"
                 value={formData.password}
@@ -121,10 +140,18 @@ export default function SignupPage() {
                   setFormData({ ...formData, password: e.target.value })
                 }
                 required
+                className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-300 rounded-2xl text-lg font-medium focus:border-black focus:outline-none focus:ring-4 focus:ring-black/10 transition-all"
               />
+              <p className="text-xs text-gray-500 mt-2 font-medium">
+                Minimum 8 characters
+              </p>
+            </div>
 
-              <Input
-                label="Confirm Password"
+            <div>
+              <label className="block text-sm font-black uppercase tracking-wide text-gray-700 mb-3">
+                Confirm Password
+              </label>
+              <input
                 type="password"
                 placeholder="••••••••"
                 value={formData.confirmPassword}
@@ -132,29 +159,41 @@ export default function SignupPage() {
                   setFormData({ ...formData, confirmPassword: e.target.value })
                 }
                 required
+                className="w-full px-6 py-4 bg-gray-50 border-2 border-gray-300 rounded-2xl text-lg font-medium focus:border-black focus:outline-none focus:ring-4 focus:ring-black/10 transition-all"
               />
+            </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full"
-                isLoading={isLoading}
+            <Button
+              type="submit"
+              variant="danger"
+              size="lg"
+              className="w-full text-lg"
+              isLoading={isLoading}
+            >
+              Create Account
+            </Button>
+
+            <div className="text-center pt-4">
+              <span className="text-gray-600">Already have an account? </span>
+              <Link
+                href="/auth/login"
+                className="font-black text-black hover:text-red-600 transition-colors"
               >
-                Create Account
-              </Button>
+                Sign In
+              </Link>
+            </div>
+          </form>
+        </div>
 
-              <div className="text-center text-sm">
-                <span className="text-gray-600">Already have an account? </span>
-                <Link
-                  href="/auth/login"
-                  className="font-medium text-black hover:text-red-600 transition-colors"
-                >
-                  Sign In
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <Link
+            href="/"
+            className="text-sm font-bold text-gray-500 hover:text-black transition-colors"
+          >
+            ← Back to Home
+          </Link>
+        </div>
       </motion.div>
     </div>
   );

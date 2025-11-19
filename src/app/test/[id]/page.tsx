@@ -3,7 +3,6 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -199,121 +198,150 @@ export default function TestPage({
   const isLastQuestion = currentIndex === testSession.questions.length - 1;
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold">Cognitive Assessment</h1>
-            <div className="text-sm font-medium">
-              Question {currentIndex + 1} of {testSession.totalQuestions}
+    <div className="min-h-screen bg-white">
+      {/* Progress Header */}
+      <div className="bg-black text-white py-6">
+        <div className="w-full flex justify-center px-8">
+          <div className="w-full max-w-4xl">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-2xl md:text-3xl font-black">
+                Cognitive Assessment
+              </h1>
+              <div className="text-sm font-bold bg-white/20 px-4 py-2 rounded-full">
+                {currentIndex + 1} / {testSession.totalQuestions}
+              </div>
             </div>
+            <ProgressBar progress={progress} />
           </div>
-          <ProgressBar progress={progress} />
         </div>
+      </div>
 
-        {/* Question Card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card variant="elevated" className="mb-8">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="px-3 py-1 bg-black text-white text-xs font-medium">
+      {/* Main Content */}
+      <div className="w-full flex justify-center px-8 py-12">
+        <div className="w-full max-w-4xl">
+          {/* Question Card */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="bg-white rounded-3xl p-10 shadow-lg mb-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="px-4 py-2 bg-black text-white text-xs font-black rounded-full uppercase">
                     {currentQuestion.category.replace("_", " ")}
                   </span>
-                  <span className="px-3 py-1 border-2 border-black text-xs font-medium">
+                  <span className="px-4 py-2 bg-gray-100 text-black text-xs font-black rounded-full uppercase">
                     {currentQuestion.difficulty}
                   </span>
                 </div>
-                <CardTitle className="text-xl">
+
+                <h2 className="text-3xl font-black mb-8 leading-tight">
                   {currentQuestion.questionText}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+                </h2>
+
+                <div className="space-y-4">
                   {currentQuestion.options.map((option, idx) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedAnswer(option)}
-                      className={`w-full text-left p-4 border-2 transition-all ${
+                      className={`w-full text-left p-6 rounded-2xl transition-all duration-300 ${
                         selectedAnswer === option
-                          ? "border-black bg-black text-white"
-                          : "border-black bg-white hover:bg-gray-50"
+                          ? "bg-black text-white shadow-xl scale-[1.02]"
+                          : "bg-white border-2 border-gray-300 hover:border-black hover:shadow-lg"
                       }`}
                     >
-                      <div className="flex items-center">
-                        <span className="font-medium mr-3">
-                          {String.fromCharCode(65 + idx)}.
+                      <div className="flex items-start gap-4">
+                        <span
+                          className={`font-black text-lg shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                            selectedAnswer === option
+                              ? "bg-white text-black"
+                              : "bg-black text-white"
+                          }`}
+                        >
+                          {String.fromCharCode(65 + idx)}
                         </span>
-                        <span>{option}</span>
+                        <span className="text-lg leading-relaxed">
+                          {option}
+                        </span>
                       </div>
                     </button>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </AnimatePresence>
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
-        {/* Answer Submission */}
-        <div className="mb-6">
-          <Button
-            variant={isCurrentAnswerSubmitted ? "secondary" : "primary"}
-            onClick={saveAnswer}
-            disabled={
-              !selectedAnswer || isSavingAnswer || isCurrentAnswerSubmitted
-            }
-            isLoading={isSavingAnswer}
-            loadingText="Submitting..."
-            className="w-full"
-          >
-            {isCurrentAnswerSubmitted ? "Submitted ✓" : "Submit Answer"}
-          </Button>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex justify-between items-center">
-          <Button
-            variant="secondary"
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-          >
-            ← Previous
-          </Button>
-
-          <div className="text-sm text-gray-600">
-            {testSession.answeredCount} / {testSession.totalQuestions} answered
+          {/* Answer Submission */}
+          <div className="mb-8">
+            <Button
+              variant={isCurrentAnswerSubmitted ? "secondary" : "danger"}
+              onClick={saveAnswer}
+              disabled={
+                !selectedAnswer || isSavingAnswer || isCurrentAnswerSubmitted
+              }
+              isLoading={isSavingAnswer}
+              loadingText="Submitting..."
+              size="lg"
+              className="w-full text-lg"
+            >
+              {isCurrentAnswerSubmitted
+                ? "✓ Answer Submitted"
+                : "Submit Answer"}
+            </Button>
           </div>
 
-          {isLastQuestion ? (
+          {/* Navigation */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-8">
             <Button
-              variant="danger"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              isLoading={isSubmitting}
+              variant="secondary"
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
+              size="lg"
+              className="w-full sm:w-auto"
             >
-              Finish Test
+              ← Previous
             </Button>
-          ) : (
-            <Button variant="secondary" onClick={handleNext}>
-              Next →
-            </Button>
-          )}
-        </div>
 
-        {/* Question Navigator */}
-        <Card variant="bordered" className="mt-8">
-          <CardHeader>
-            <CardTitle className="text-lg">Question Navigator</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-10 gap-2">
+            <div className="text-center">
+              <div className="text-sm font-bold text-gray-500 uppercase mb-1">
+                Progress
+              </div>
+              <div className="text-2xl font-black">
+                {testSession.answeredCount} / {testSession.totalQuestions}
+              </div>
+              <div className="text-xs text-gray-500">Questions Answered</div>
+            </div>
+
+            {isLastQuestion ? (
+              <Button
+                variant="danger"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                isLoading={isSubmitting}
+                size="lg"
+                className="w-full sm:w-auto"
+              >
+                🏁 Finish Test
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                onClick={handleNext}
+                size="lg"
+                className="w-full sm:w-auto"
+              >
+                Next →
+              </Button>
+            )}
+          </div>
+
+          {/* Question Navigator */}
+          <div className="bg-white rounded-3xl p-8 shadow-lg">
+            <h3 className="text-2xl font-black mb-6">Question Navigator</h3>
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
               {testSession.questions.map((q, idx) => {
                 const isAnswered = testSession.answers.some(
                   (a) => a.questionId === q.id
@@ -324,12 +352,12 @@ export default function TestPage({
                   <button
                     key={q.id}
                     onClick={() => setCurrentIndex(idx)}
-                    className={`aspect-square flex items-center justify-center text-sm font-medium border-2 transition-all ${
+                    className={`aspect-square flex items-center justify-center text-sm font-black rounded-xl transition-all duration-300 ${
                       isCurrent
-                        ? "border-red-600 bg-red-600 text-white"
+                        ? "bg-red-600 text-white shadow-lg scale-110"
                         : isAnswered
-                        ? "border-black bg-black text-white"
-                        : "border-gray-300 bg-white hover:border-black"
+                        ? "bg-black text-white hover:shadow-lg"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-md"
                     }`}
                   >
                     {idx + 1}
@@ -337,8 +365,23 @@ export default function TestPage({
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="flex items-center justify-center gap-6 mt-8 pt-6 border-t-2 border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-red-600 rounded-lg"></div>
+                <span className="text-sm font-medium">Current</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-black rounded-lg"></div>
+                <span className="text-sm font-medium">Answered</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-gray-100 border-2 border-gray-300 rounded-lg"></div>
+                <span className="text-sm font-medium">Unanswered</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

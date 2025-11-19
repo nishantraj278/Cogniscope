@@ -173,7 +173,7 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="py-20 relative w-full flex justify-center bg-white">
-        <div className="w-full max-w-7xl px-8 sm:px-12 lg:px-16">
+        <div className="w-full max-w-7xl px-12 sm:px-16 lg:px-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -189,7 +189,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 relative">
+          <div className="grid md:grid-cols-3 gap-12 lg:gap-16 relative">
             {/* Connecting Lines */}
             <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-gray-300 to-transparent -translate-y-1/2" />
 
@@ -198,7 +198,7 @@ export default function Home() {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
-              className="relative"
+              className="relative z-10"
             >
               <div className="bg-white rounded-3xl p-10 md:p-12 shadow-xl hover:shadow-2xl transition-all duration-300 h-full border-2 border-gray-100 hover:border-black relative overflow-hidden group">
                 {/* Bubble Number */}
@@ -230,7 +230,7 @@ export default function Home() {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               viewport={{ once: true }}
-              className="relative"
+              className="relative z-10"
             >
               <div className="bg-white rounded-3xl p-10 md:p-12 shadow-xl hover:shadow-2xl transition-all duration-300 h-full border-2 border-gray-100 hover:border-red-600 relative overflow-hidden group">
                 <motion.div
@@ -260,7 +260,7 @@ export default function Home() {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
               viewport={{ once: true }}
-              className="relative"
+              className="relative z-10"
             >
               <div className="bg-white rounded-3xl p-10 md:p-12 shadow-xl hover:shadow-2xl transition-all duration-300 h-full border-2 border-gray-100 hover:border-black relative overflow-hidden group">
                 <motion.div
