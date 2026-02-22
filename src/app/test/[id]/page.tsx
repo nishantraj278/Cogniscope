@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Question {
@@ -18,6 +19,7 @@ interface Question {
 
 interface TestSession {
   id: string;
+  testType: string;
   totalQuestions: number;
   answeredCount: number;
   questions: Question[];
@@ -40,6 +42,8 @@ export default function TestPage({
   const [isCurrentAnswerSubmitted, setIsCurrentAnswerSubmitted] =
     useState(false);
   const [startTime, setStartTime] = useState(Date.now());
+  const [audioData, setAudioData] = useState<string | null>(null);
+  const [hasAudioRecording, setHasAudioRecording] = useState(false);
 
   useEffect(() => {
     fetchTestSession();
@@ -53,10 +57,13 @@ export default function TestPage({
   useEffect(() => {
     if (testSession && testSession.questions[currentIndex]) {
       const existingAnswer = testSession.answers.find(
-        (a) => a.questionId === testSession.questions[currentIndex].id
+        (a) => a.questionId === testSession.questions[currentIndex].id,
       );
       setSelectedAnswer(existingAnswer?.userAnswer || "");
       setIsCurrentAnswerSubmitted(!!existingAnswer);
+      // Reset voice data when switching questions
+      setAudioData(null);
+      setHasAudioRecording(false);
     }
   }, [currentIndex, testSession]);
 
@@ -73,7 +80,7 @@ export default function TestPage({
         throw new Error(
           `Failed to fetch test session: ${
             errorData.error || response.statusText
-          }`
+          }`,
         );
       }
       const data = await response.json();
@@ -84,7 +91,7 @@ export default function TestPage({
       alert(
         `Failed to load test: ${
           error instanceof Error ? error.message : "Unknown error"
-        }. Redirecting to dashboard.`
+        }. Redirecting to dashboard.`,
       );
       router.push("/dashboard");
     } finally {
@@ -93,9 +100,15 @@ export default function TestPage({
   };
 
   const saveAnswer = async () => {
-    if (!testSession || !selectedAnswer) return;
+    if (!testSession) return;
 
     const currentQuestion = testSession.questions[currentIndex];
+    const isVoiceQuestion = currentQuestion.questionType === "VOICE_ANSWER";
+
+    // Validate based on question type
+    if (isVoiceQuestion && !audioData) return;
+    if (!isVoiceQuestion && !selectedAnswer) return;
+
     const responseTime = Date.now() - startTime;
 
     setIsSavingAnswer(true);
@@ -107,8 +120,9 @@ export default function TestPage({
         },
         body: JSON.stringify({
           questionId: currentQuestion.id,
-          userAnswer: selectedAnswer,
+          userAnswer: isVoiceQuestion ? "[Voice Answer]" : selectedAnswer,
           responseTime,
+          audioData: isVoiceQuestion ? audioData : null,
         }),
       });
 
@@ -118,7 +132,7 @@ export default function TestPage({
 
       // Update local state
       const updatedAnswers = testSession.answers.filter(
-        (a) => a.questionId !== currentQuestion.id
+        (a) => a.questionId !== currentQuestion.id,
       );
       updatedAnswers.push({
         questionId: currentQuestion.id,
@@ -163,7 +177,7 @@ export default function TestPage({
       testSession.questions.length - testSession.answers.length;
     if (unanswered > 0) {
       const confirm = window.confirm(
-        `You have ${unanswered} unanswered questions. Submit anyway?`
+        `You have ${unanswered} unanswered questions. Submit anyway?`,
       );
       if (!confirm) return;
     }
@@ -204,9 +218,17 @@ export default function TestPage({
         <div className="w-full flex justify-center px-8">
           <div className="w-full max-w-4xl">
             <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl md:text-3xl font-black">
-                Cognitive Assessment
-              </h1>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black">
+                  {testSession.testType === "VOICE" ? "🎤 Voice" : "📝 MCQ"}{" "}
+                  Assessment
+                </h1>
+                <p className="text-sm text-gray-300 mt-1">
+                  {testSession.testType === "VOICE"
+                    ? "Answer questions using your voice"
+                    : "Select the best answer for each question"}
+                </p>
+              </div>
               <div className="text-sm font-bold bg-white/20 px-4 py-2 rounded-full">
                 {currentIndex + 1} / {testSession.totalQuestions}
               </div>
@@ -242,34 +264,46 @@ export default function TestPage({
                   {currentQuestion.questionText}
                 </h2>
 
-                <div className="space-y-4">
-                  {currentQuestion.options.map((option, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedAnswer(option)}
-                      className={`w-full text-left p-6 rounded-2xl transition-all duration-300 ${
-                        selectedAnswer === option
-                          ? "bg-black text-white shadow-xl scale-[1.02]"
-                          : "bg-white border-2 border-gray-300 hover:border-black hover:shadow-lg"
-                      }`}
-                    >
-                      <div className="flex items-start gap-4">
-                        <span
-                          className={`font-black text-lg shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                            selectedAnswer === option
-                              ? "bg-white text-black"
-                              : "bg-black text-white"
-                          }`}
-                        >
-                          {String.fromCharCode(65 + idx)}
-                        </span>
-                        <span className="text-lg leading-relaxed">
-                          {option}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                {/* Voice Question */}
+                {currentQuestion.questionType === "VOICE_ANSWER" ? (
+                  <VoiceRecorder
+                    onRecordingComplete={(blob, base64) => {
+                      setAudioData(base64);
+                      setHasAudioRecording(true);
+                    }}
+                    disabled={isCurrentAnswerSubmitted}
+                  />
+                ) : (
+                  /* Multiple Choice Options */
+                  <div className="space-y-4">
+                    {currentQuestion.options.map((option, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedAnswer(option)}
+                        className={`w-full text-left p-6 rounded-2xl transition-all duration-300 ${
+                          selectedAnswer === option
+                            ? "bg-black text-white shadow-xl scale-[1.02]"
+                            : "bg-white border-2 border-gray-300 hover:border-black hover:shadow-lg"
+                        }`}
+                      >
+                        <div className="flex items-start gap-4">
+                          <span
+                            className={`font-black text-lg shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                              selectedAnswer === option
+                                ? "bg-white text-black"
+                                : "bg-black text-white"
+                            }`}
+                          >
+                            {String.fromCharCode(65 + idx)}
+                          </span>
+                          <span className="text-lg leading-relaxed">
+                            {option}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
@@ -280,7 +314,11 @@ export default function TestPage({
               variant={isCurrentAnswerSubmitted ? "secondary" : "danger"}
               onClick={saveAnswer}
               disabled={
-                !selectedAnswer || isSavingAnswer || isCurrentAnswerSubmitted
+                (currentQuestion.questionType === "VOICE_ANSWER"
+                  ? !hasAudioRecording
+                  : !selectedAnswer) ||
+                isSavingAnswer ||
+                isCurrentAnswerSubmitted
               }
               isLoading={isSavingAnswer}
               loadingText="Submitting..."
@@ -344,7 +382,7 @@ export default function TestPage({
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
               {testSession.questions.map((q, idx) => {
                 const isAnswered = testSession.answers.some(
-                  (a) => a.questionId === q.id
+                  (a) => a.questionId === q.id,
                 );
                 const isCurrent = idx === currentIndex;
 
@@ -356,8 +394,8 @@ export default function TestPage({
                       isCurrent
                         ? "bg-red-600 text-white shadow-lg scale-110"
                         : isAnswered
-                        ? "bg-black text-white hover:shadow-lg"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-md"
+                          ? "bg-black text-white hover:shadow-lg"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-md"
                     }`}
                   >
                     {idx + 1}

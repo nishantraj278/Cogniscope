@@ -8,11 +8,12 @@ const answerSchema = z.object({
   questionId: z.string(),
   userAnswer: z.string(),
   responseTime: z.number().optional(),
+  audioData: z.string().nullable().optional(), // Base64 encoded audio
 });
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -23,7 +24,8 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { questionId, userAnswer, responseTime } = answerSchema.parse(body);
+    const { questionId, userAnswer, responseTime, audioData } =
+      answerSchema.parse(body);
 
     // Verify test session belongs to user
     const testSession = await prisma.testSession.findFirst({
@@ -48,13 +50,17 @@ export async function POST(
     if (!question) {
       return NextResponse.json(
         { error: "Question not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Check if answer is correct
-    const isCorrect =
-      userAnswer.trim().toLowerCase() === question.correctAnswer?.toLowerCase();
+    // For voice answers, we'll need speech-to-text processing
+    const isVoiceQuestion = question.questionType === "VOICE_ANSWER";
+    const isCorrect = isVoiceQuestion
+      ? null // Will be evaluated after transcription
+      : userAnswer.trim().toLowerCase() ===
+        question.correctAnswer?.toLowerCase();
 
     // Create or update answer
     const answer = await prisma.answer.upsert({
@@ -67,11 +73,14 @@ export async function POST(
         userAnswer,
         isCorrect,
         responseTime,
+        audioData: audioData || null,
+        transcribedText: null, // Will be populated by transcription service
       },
       update: {
         userAnswer,
         isCorrect,
         responseTime,
+        audioData: audioData || null,
       },
     });
 
@@ -92,14 +101,14 @@ export async function POST(
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     console.error("Error saving answer:", error);
     return NextResponse.json(
       { error: "Failed to save answer" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

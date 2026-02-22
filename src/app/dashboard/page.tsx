@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 
 interface TestSession {
   id: string;
+  testType: string;
   status: string;
   startedAt: string;
   completedAt: string | null;
@@ -26,7 +27,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [testSessions, setTestSessions] = useState<TestSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingMCQ, setIsCreatingMCQ] = useState(false);
+  const [isCreatingVoice, setIsCreatingVoice] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -52,16 +54,18 @@ export default function DashboardPage() {
     }
   };
 
-  const createNewTest = async () => {
+  const createNewTest = async (testType: "MCQ" | "VOICE") => {
+    const setIsCreating =
+      testType === "MCQ" ? setIsCreatingMCQ : setIsCreatingVoice;
     setIsCreating(true);
     try {
-      console.log("Creating new test...");
+      console.log(`Creating new ${testType} test...`);
       const response = await fetch("/api/tests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ numberOfQuestions: 20 }),
+        body: JSON.stringify({ numberOfQuestions: 20, testType }),
       });
 
       console.log("Create test response status:", response.status);
@@ -72,7 +76,7 @@ export default function DashboardPage() {
           .catch(() => ({ error: "Unknown error" }));
         console.error("Failed to create test:", response.status, errorData);
         alert(
-          `Failed to create test: ${errorData.error || response.statusText}`
+          `Failed to create test: ${errorData.error || response.statusText}`,
         );
         return;
       }
@@ -98,14 +102,14 @@ export default function DashboardPage() {
 
   const completedTests = testSessions.filter((t) => t.status === "COMPLETED");
   const inProgressTests = testSessions.filter(
-    (t) => t.status === "IN_PROGRESS"
+    (t) => t.status === "IN_PROGRESS",
   );
 
   const averageScore =
     completedTests.length > 0
       ? completedTests.reduce(
           (sum, t) => sum + (t.report?.overallScore || 0),
-          0
+          0,
         ) / completedTests.length
       : 0;
 
@@ -149,16 +153,44 @@ export default function DashboardPage() {
               {session?.user?.name || session?.user?.email}
             </p>
 
-            <div className="flex items-center justify-center gap-6">
-              <Button
-                variant="danger"
-                size="lg"
-                onClick={createNewTest}
-                isLoading={isCreating}
-                className="text-lg px-8"
-              >
-                🧠 Start New Assessment
-              </Button>
+            <div className="mb-10">
+              <h3 className="text-lg font-semibold mb-6 text-gray-300">
+                Choose Your Test Type:
+              </h3>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <div className="flex flex-col items-center gap-3">
+                  <Button
+                    variant="danger"
+                    size="lg"
+                    onClick={() => createNewTest("MCQ")}
+                    isLoading={isCreatingMCQ}
+                    className="text-lg px-8 min-w-60"
+                  >
+                    📝 MCQ Test
+                  </Button>
+                  <p className="text-sm text-gray-400">
+                    Multiple choice questions
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center gap-3">
+                  <Button
+                    variant="danger"
+                    size="lg"
+                    onClick={() => createNewTest("VOICE")}
+                    isLoading={isCreatingVoice}
+                    className="text-lg px-8 min-w-60"
+                  >
+                    🎤 Voice Test
+                  </Button>
+                  <p className="text-sm text-gray-400">
+                    Answer with your voice
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center">
               <Link href="/reports">
                 <Button
                   variant="ghost"
@@ -279,10 +311,16 @@ export default function DashboardPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-4">
                             <div className="text-2xl font-black">
-                              Test #{test.id.slice(0, 8)}
+                              {test.testType === "VOICE" ? "🎤" : "📝"} Test #
+                              {test.id.slice(0, 8)}
                             </div>
                             <span className="px-4 py-1.5 bg-red-600 text-white text-xs font-black rounded-full uppercase">
                               Active
+                            </span>
+                            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
+                              {test.testType === "VOICE"
+                                ? "Voice Test"
+                                : "MCQ Test"}
                             </span>
                           </div>
 
@@ -294,7 +332,7 @@ export default function DashboardPage() {
                                 month: "long",
                                 day: "numeric",
                                 year: "numeric",
-                              }
+                              },
                             )}
                           </div>
 
@@ -359,14 +397,26 @@ export default function DashboardPage() {
                     Start your first cognitive assessment to track your mental
                     wellbeing
                   </p>
-                  <Button
-                    variant="danger"
-                    size="lg"
-                    onClick={createNewTest}
-                    className="text-lg px-10"
-                  >
-                    Take Your First Assessment
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button
+                      variant="danger"
+                      size="lg"
+                      onClick={() => createNewTest("MCQ")}
+                      isLoading={isCreatingMCQ}
+                      className="text-lg px-10"
+                    >
+                      📝 MCQ Test
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="lg"
+                      onClick={() => createNewTest("VOICE")}
+                      isLoading={isCreatingVoice}
+                      className="text-lg px-10"
+                    >
+                      🎤 Voice Test
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -383,7 +433,8 @@ export default function DashboardPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-4">
                             <span className="text-2xl font-black">
-                              #{test.id.slice(0, 8)}
+                              {test.testType === "VOICE" ? "🎤" : "📝"} #
+                              {test.id.slice(0, 8)}
                             </span>
                             <span
                               className={`px-4 py-1.5 text-xs font-black rounded-full uppercase ${
@@ -396,6 +447,11 @@ export default function DashboardPage() {
                                 ? "Completed"
                                 : "In Progress"}
                             </span>
+                            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
+                              {test.testType === "VOICE"
+                                ? "Voice Test"
+                                : "MCQ Test"}
+                            </span>
                           </div>
 
                           <div className="text-sm text-gray-600 mb-4 font-medium">
@@ -405,7 +461,7 @@ export default function DashboardPage() {
                                 month: "long",
                                 day: "numeric",
                                 year: "numeric",
-                              }
+                              },
                             )}
                           </div>
 
@@ -438,8 +494,8 @@ export default function DashboardPage() {
                                     test.report.riskLevel === "LOW"
                                       ? "bg-black text-white"
                                       : test.report.riskLevel === "MODERATE"
-                                      ? "bg-gray-800 text-white"
-                                      : "bg-red-600 text-white"
+                                        ? "bg-gray-800 text-white"
+                                        : "bg-red-600 text-white"
                                   }`}
                                 >
                                   {test.report.riskLevel}

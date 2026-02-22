@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
     console.log(
       "Session:",
-      session?.user?.id ? "Authenticated" : "Not authenticated"
+      session?.user?.id ? "Authenticated" : "Not authenticated",
     );
 
     if (!session?.user?.id) {
@@ -18,20 +18,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { numberOfQuestions = 20 } = await req.json();
+    const { numberOfQuestions = 20, testType = "MCQ" } = await req.json();
     console.log("Requested number of questions:", numberOfQuestions);
+    console.log("Test type:", testType);
 
     // Generate questions using Gemini
     console.log("Generating questions with Gemini...");
     let generatedQuestions;
     try {
-      generatedQuestions = await generateCognitiveTest(numberOfQuestions);
+      generatedQuestions = await generateCognitiveTest(
+        numberOfQuestions,
+        testType,
+      );
       console.log("Generated questions:", generatedQuestions.length);
     } catch (geminiError) {
       console.error("Gemini API Error:", geminiError);
       console.error(
         "Gemini Error Message:",
-        geminiError instanceof Error ? geminiError.message : "Unknown"
+        geminiError instanceof Error ? geminiError.message : "Unknown",
       );
       throw geminiError;
     }
@@ -41,6 +45,7 @@ export async function POST(req: NextRequest) {
     const testSession = await prisma.testSession.create({
       data: {
         userId: session.user.id,
+        testType: testType,
         totalQuestions: generatedQuestions.length,
         status: "IN_PROGRESS",
         questions: {
@@ -78,11 +83,11 @@ export async function POST(req: NextRequest) {
     console.error("Error creating test session:", error);
     console.error(
       "Error details:",
-      error instanceof Error ? error.message : "Unknown error"
+      error instanceof Error ? error.message : "Unknown error",
     );
     return NextResponse.json(
       { error: "Failed to create test session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -117,7 +122,7 @@ export async function GET(req: NextRequest) {
     console.error("Error fetching test sessions:", error);
     return NextResponse.json(
       { error: "Failed to fetch test sessions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

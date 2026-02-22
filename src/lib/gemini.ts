@@ -1,6 +1,6 @@
 if (!process.env.OPENROUTER_API_KEY) {
   console.warn(
-    "OPENROUTER_API_KEY is not defined, will use fallback questions"
+    "OPENROUTER_API_KEY is not defined, will use fallback questions",
   );
 }
 
@@ -44,9 +44,23 @@ export interface TestEvaluation {
  * Generate cognitive test questions using Gemini AI
  */
 export async function generateCognitiveTest(
-  numberOfQuestions: number = 20
+  numberOfQuestions: number = 20,
+  testType: "MCQ" | "VOICE" = "MCQ",
 ): Promise<GeneratedQuestion[]> {
+  const questionTypeInstruction =
+    testType === "VOICE"
+      ? `ALL questions MUST be questionType: "VOICE_ANSWER". This is a voice-only test where users will speak their answers.`
+      : `Use questionType: "MULTIPLE_CHOICE", "TRUE_FALSE", "SEQUENCE", or "PATTERN_RECOGNITION". Do NOT include VOICE_ANSWER questions.`;
+
+  const optionsInstruction =
+    testType === "VOICE"
+      ? `- options: Empty array [] (voice questions don't have options)`
+      : `- options: Array of 4 answer choices (for multiple choice)`;
+
   const prompt = `You are a cognitive assessment expert. Generate ${numberOfQuestions} scientifically-validated cognitive test questions for early dementia detection.
+
+TEST TYPE: ${testType === "VOICE" ? "VOICE-BASED TEST" : "MULTIPLE CHOICE TEST"}
+${questionTypeInstruction}
 
 The test should cover these cognitive domains:
 1. Memory Recall (episodic and working memory)
@@ -57,12 +71,26 @@ The test should cover these cognitive domains:
 6. Processing Speed
 
 For each question, provide:
-- questionType: "MULTIPLE_CHOICE", "TRUE_FALSE", "SEQUENCE", or "PATTERN_RECOGNITION"
+- questionType: ${testType === "VOICE" ? `"VOICE_ANSWER" (required for all questions)` : `"MULTIPLE_CHOICE", "TRUE_FALSE", "SEQUENCE", or "PATTERN_RECOGNITION"`}
 - questionText: Clear, professional question text
-- options: Array of 4 answer choices (for multiple choice)
-- correctAnswer: The correct answer
+${optionsInstruction}
+- correctAnswer: ${testType === "VOICE" ? "Expected answer keywords or elements" : "The correct answer"}
 - category: One of the cognitive domains above (use snake_case: MEMORY_RECALL, ATTENTION, EXECUTIVE_FUNCTION, LANGUAGE_COMPREHENSION, VISUAL_SPATIAL, PROCESSING_SPEED)
 - difficulty: "EASY", "MEDIUM", or "HARD"
+
+${
+  testType === "VOICE"
+    ? `VOICE TEST REQUIREMENTS:
+- Focus on verbal fluency, language expression, memory recall, and comprehension
+- Questions should prompt spoken responses (e.g., "Describe...", "Name...", "Explain...", "Tell me about...")
+- Set correctAnswer to keywords or expected elements for evaluation
+- Examples: "Describe your morning routine", "Name as many animals as you can", "Explain a proverb"`
+    : `MCQ TEST REQUIREMENTS:
+- Questions should have clear, distinct answer choices
+- Ensure correctAnswer exactly matches one of the options
+- Mix question types evenly
+- Do NOT include VOICE_ANSWER questions`
+}
 
 Distribute questions evenly across categories and difficulty levels.
 
@@ -77,13 +105,21 @@ Example format:
     "correctAnswer": "Apple, Table, Penny",
     "category": "MEMORY_RECALL",
     "difficulty": "EASY"
+  },
+  {
+    "questionType": "VOICE_ANSWER",
+    "questionText": "Please describe what you did this morning in as much detail as possible.",
+    "options": [],
+    "correctAnswer": "coherent narrative, sequential events, temporal awareness",
+    "category": "MEMORY_RECALL",
+    "difficulty": "MEDIUM"
   }
 ]`;
 
   try {
     if (!OPENROUTER_API_KEY) {
       console.log("No OpenRouter API key, using fallback questions");
-      return getFallbackQuestions(numberOfQuestions);
+      return getFallbackQuestions(numberOfQuestions, testType);
     }
 
     console.log("Calling OpenRouter API to generate questions...");
@@ -137,14 +173,17 @@ Example format:
 
     // Fallback to hardcoded questions if API fails
     console.log("Using fallback questions due to API error");
-    return getFallbackQuestions(numberOfQuestions);
+    return getFallbackQuestions(numberOfQuestions, testType);
   }
 }
 
 /**
  * Fallback questions when Gemini API is unavailable
  */
-function getFallbackQuestions(count: number): GeneratedQuestion[] {
+function getFallbackQuestions(
+  count: number,
+  testType: "MCQ" | "VOICE" = "MCQ",
+): GeneratedQuestion[] {
   const allQuestions: GeneratedQuestion[] = [
     {
       questionType: "MULTIPLE_CHOICE",
@@ -323,9 +362,53 @@ function getFallbackQuestions(count: number): GeneratedQuestion[] {
       category: "VISUAL_SPATIAL",
       difficulty: "EASY",
     },
+    {
+      questionType: "VOICE_ANSWER",
+      questionText:
+        "Please describe what you did this morning in as much detail as possible. Speak for at least 30 seconds.",
+      options: [],
+      correctAnswer:
+        "coherent narrative, sequential events, temporal awareness",
+      category: "MEMORY_RECALL",
+      difficulty: "MEDIUM",
+    },
+    {
+      questionType: "VOICE_ANSWER",
+      questionText: "Name as many animals as you can think of in one minute.",
+      options: [],
+      correctAnswer: "verbal fluency, category generation",
+      category: "LANGUAGE_COMPREHENSION",
+      difficulty: "MEDIUM",
+    },
+    {
+      questionType: "VOICE_ANSWER",
+      questionText:
+        "Describe the room you are currently in. Include details about objects, colors, and layout.",
+      options: [],
+      correctAnswer:
+        "spatial awareness, descriptive language, observation skills",
+      category: "VISUAL_SPATIAL",
+      difficulty: "MEDIUM",
+    },
+    {
+      questionType: "VOICE_ANSWER",
+      questionText:
+        "Explain in your own words what the saying 'Don't count your chickens before they hatch' means.",
+      options: [],
+      correctAnswer:
+        "abstract thinking, language comprehension, explanation ability",
+      category: "EXECUTIVE_FUNCTION",
+      difficulty: "HARD",
+    },
   ];
 
-  return allQuestions.slice(0, Math.min(count, allQuestions.length));
+  // Filter questions based on test type
+  const filteredQuestions =
+    testType === "VOICE"
+      ? allQuestions.filter((q) => q.questionType === "VOICE_ANSWER")
+      : allQuestions.filter((q) => q.questionType !== "VOICE_ANSWER");
+
+  return filteredQuestions.slice(0, Math.min(count, filteredQuestions.length));
 }
 
 /**
@@ -344,24 +427,27 @@ export async function evaluateTestAnswers(
     isCorrect: boolean;
     responseTime?: number;
   }>,
-  userAge?: number
+  userAge?: number,
 ): Promise<TestEvaluation> {
   const totalQuestions = questions.length;
   const correctAnswers = answers.filter((a) => a.isCorrect).length;
   const accuracy = (correctAnswers / totalQuestions) * 100;
 
   // Calculate category-wise performance
-  const categoryPerformance = questions.reduce((acc, q, idx) => {
-    const answer = answers[idx];
-    if (!acc[q.category]) {
-      acc[q.category] = { correct: 0, total: 0 };
-    }
-    acc[q.category].total++;
-    if (answer?.isCorrect) {
-      acc[q.category].correct++;
-    }
-    return acc;
-  }, {} as Record<string, { correct: number; total: number }>);
+  const categoryPerformance = questions.reduce(
+    (acc, q, idx) => {
+      const answer = answers[idx];
+      if (!acc[q.category]) {
+        acc[q.category] = { correct: 0, total: 0 };
+      }
+      acc[q.category].total++;
+      if (answer?.isCorrect) {
+        acc[q.category].correct++;
+      }
+      return acc;
+    },
+    {} as Record<string, { correct: number; total: number }>,
+  );
 
   const prompt = `You are a cognitive health specialist analyzing results from a dementia screening test.
 
@@ -378,7 +464,7 @@ ${Object.entries(categoryPerformance)
       `- ${category}: ${data.correct}/${data.total} (${(
         (data.correct / data.total) *
         100
-      ).toFixed(1)}%)`
+      ).toFixed(1)}%)`,
   )
   .join("\n")}
 
@@ -389,7 +475,7 @@ ${answers
     (a, i) =>
       `Q${i + 1}: ${questions[i]?.questionText}\nUser Answer: ${
         a.userAnswer
-      }\nCorrect: ${a.isCorrect ? "Yes" : "No"}\n`
+      }\nCorrect: ${a.isCorrect ? "Yes" : "No"}\n`,
   )
   .join("\n")}
 
@@ -482,7 +568,7 @@ Return ONLY valid JSON, no additional text.`;
  */
 function generateFallbackEvaluation(
   accuracy: number,
-  categoryPerformance: Record<string, { correct: number; total: number }>
+  categoryPerformance: Record<string, { correct: number; total: number }>,
 ): TestEvaluation {
   let riskLevel: "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
   if (accuracy >= 85) riskLevel = "LOW";
@@ -507,7 +593,7 @@ function generateFallbackEvaluation(
       visualSpatialScore: calculateScore("VISUAL_SPATIAL"),
     },
     summary: `Your cognitive assessment shows ${riskLevel.toLowerCase()} risk with ${accuracy.toFixed(
-      1
+      1,
     )}% overall accuracy.`,
     strengths: ["Completed full assessment", "Active cognitive engagement"],
     concernAreas:
