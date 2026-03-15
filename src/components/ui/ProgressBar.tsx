@@ -17,15 +17,15 @@ export function ProgressBar({
     <div className={`w-full ${className}`}>
       {showLabel && (
         <div className="flex justify-between mb-2">
-          <span className="text-sm font-medium">Progress</span>
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium text-slate-300">Progress</span>
+          <span className="text-sm font-medium text-white">
             {clampedProgress.toFixed(0)}%
           </span>
         </div>
       )}
-      <div className="w-full h-3 bg-gray-200 border-2 border-black">
+      <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-red-600 transition-all duration-300 ease-out"
+          className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-300 ease-out rounded-full"
           style={{ width: `${clampedProgress}%` }}
         />
       </div>

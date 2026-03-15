@@ -1,14 +1,23 @@
-if (!process.env.OPENROUTER_API_KEY) {
-  console.warn(
-    "OPENROUTER_API_KEY is not defined, will use fallback questions",
-  );
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+if (!process.env.GEMINI_API_KEY) {
+  console.warn("GEMINI_API_KEY is not defined, will use fallback questions");
 }
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Use a good model from OpenRouter - you can change this to any model available
-const MODEL = "meta-llama/llama-3.1-8b-instruct:free"; // or "meta-llama/llama-3.1-8b-instruct:free"
+// Debug logging
+console.log(
+  "🔑 Gemini API Key status:",
+  GEMINI_API_KEY ? "✅ LOADED" : "❌ MISSING",
+);
+console.log("🔑 First 10 chars:", GEMINI_API_KEY?.substring(0, 10) || "N/A");
+
+// Initialize Gemini AI
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+const MODEL = "gemini-1.5-flash";
+
+console.log("🤖 Gemini AI initialized:", genAI ? "✅ YES" : "❌ NO");
 
 // Types for Gemini responses
 export interface GeneratedQuestion {
@@ -117,42 +126,18 @@ Example format:
 ]`;
 
   try {
-    if (!OPENROUTER_API_KEY) {
-      console.log("No OpenRouter API key, using fallback questions");
+    if (!genAI) {
+      console.log("No Gemini API key, using fallback questions");
       return getFallbackQuestions(numberOfQuestions, testType);
     }
 
-    console.log("Calling OpenRouter API to generate questions...");
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
-        "X-Title": "CogniScope - Dementia Assessment",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
+    console.log("Calling Gemini API to generate questions...");
+    const model = genAI.getGenerativeModel({ model: MODEL });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenRouter API error:", response.status, errorText);
-      throw new Error(`OpenRouter API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data.choices[0].message.content;
-    console.log("OpenRouter API response received, length:", text.length);
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    console.log("Gemini API response received, length:", text.length);
 
     // Clean the response to extract JSON
     const jsonMatch = text.match(/\[[\s\S]*\]/);
@@ -511,41 +496,17 @@ Provide practical, actionable recommendations and be specific about clinical ind
 Return ONLY valid JSON, no additional text.`;
 
   try {
-    if (!OPENROUTER_API_KEY) {
-      console.log("No OpenRouter API key, using fallback evaluation");
+    if (!genAI) {
+      console.log("No Gemini API key, using fallback evaluation");
       return generateFallbackEvaluation(accuracy, categoryPerformance);
     }
 
-    console.log("Calling OpenRouter API to evaluate test...");
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
-        "X-Title": "CogniScope - Dementia Assessment",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
+    console.log("Calling Gemini API to evaluate test...");
+    const model = genAI.getGenerativeModel({ model: MODEL });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenRouter API error:", response.status, errorText);
-      throw new Error(`OpenRouter API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const text = data.choices[0].message.content;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
     // Clean the response to extract JSON
     const jsonMatch = text.match(/\{[\s\S]*\}/);

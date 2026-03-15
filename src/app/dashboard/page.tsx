@@ -6,6 +6,19 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
+import {
+  FileText,
+  Mic,
+  BarChart3,
+  CheckCircle2,
+  Target,
+  Clock,
+  ArrowRight,
+  Brain,
+  Activity,
+  TrendingUp,
+  Sparkles,
+} from "lucide-react";
 
 interface TestSession {
   id: string;
@@ -115,169 +128,222 @@ export default function DashboardPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl font-bold">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-slate-200 rounded-full" />
+            <div className="absolute inset-0 w-16 h-16 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin" />
+          </div>
+          <p className="text-slate-600 font-medium">
+            Loading your dashboard...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section with Background */}
-      <div
-        className="relative bg-black text-white overflow-hidden"
-        style={{ marginLeft: 0 }}
-      >
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 right-20 w-96 h-96 bg-red-600 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-20 left-20 w-96 h-96 bg-red-600 rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2" />
         </div>
 
-        <div className="relative w-full flex justify-center px-8 py-20">
+        <div className="relative max-w-7xl mx-auto px-6 py-16 lg:py-24">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-6xl"
+            transition={{ duration: 0.5 }}
+            className="text-center"
           >
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-2 mb-6">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <span className="text-sm font-medium">You&apos;re logged in</span>
+            {/* Status badge */}
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2 mb-8">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="text-sm font-medium text-slate-300">
+                Active Session
+              </span>
             </div>
 
-            <h1 className="text-6xl md:text-7xl font-black mb-4 tracking-tight">
-              Welcome Back
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 tracking-tight text-balance">
+              Welcome back,{" "}
+              <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                {session?.user?.name || "User"}
+              </span>
             </h1>
 
-            <p className="text-2xl text-gray-300 mb-8">
-              {session?.user?.name || session?.user?.email}
+            <p className="text-lg text-slate-400 mb-12 max-w-2xl mx-auto text-pretty">
+              Continue your cognitive health journey. Take an assessment to
+              track your mental wellness.
             </p>
 
+            {/* Test Type Selection */}
             <div className="mb-10">
-              <h3 className="text-lg font-semibold mb-6 text-gray-300">
-                Choose Your Test Type:
-              </h3>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <div className="flex flex-col items-center gap-3">
-                  <Button
-                    variant="danger"
-                    size="lg"
-                    onClick={() => createNewTest("MCQ")}
-                    isLoading={isCreatingMCQ}
-                    className="text-lg px-8 min-w-60"
-                  >
-                    📝 MCQ Test
-                  </Button>
-                  <p className="text-sm text-gray-400">
-                    Multiple choice questions
-                  </p>
-                </div>
+              <p className="text-sm font-medium text-slate-400 mb-6 uppercase tracking-wider">
+                Start a New Assessment
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => createNewTest("MCQ")}
+                  disabled={isCreatingMCQ}
+                  className="group relative flex items-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-2xl font-semibold shadow-lg shadow-white/10 hover:shadow-xl hover:shadow-white/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px]"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block">MCQ Test</span>
+                    <span className="text-xs text-slate-500 font-normal">
+                      Multiple choice
+                    </span>
+                  </div>
+                  {isCreatingMCQ && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white rounded-2xl">
+                      <div className="w-5 h-5 border-2 border-slate-300 border-t-emerald-500 rounded-full animate-spin" />
+                    </div>
+                  )}
+                </motion.button>
 
-                <div className="flex flex-col items-center gap-3">
-                  <Button
-                    variant="danger"
-                    size="lg"
-                    onClick={() => createNewTest("VOICE")}
-                    isLoading={isCreatingVoice}
-                    className="text-lg px-8 min-w-60"
-                  >
-                    🎤 Voice Test
-                  </Button>
-                  <p className="text-sm text-gray-400">
-                    Answer with your voice
-                  </p>
-                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => createNewTest("VOICE")}
+                  disabled={isCreatingVoice}
+                  className="group relative flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed min-w-[200px]"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm">
+                    <Mic className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block">Voice Test</span>
+                    <span className="text-xs text-white/70 font-normal">
+                      Answer verbally
+                    </span>
+                  </div>
+                  {isCreatingVoice && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-2xl">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    </div>
+                  )}
+                </motion.button>
               </div>
             </div>
 
-            <div className="flex items-center justify-center">
-              <Link href="/reports">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="text-lg px-8 text-white border-2 border-white hover:bg-white hover:text-black"
-                >
-                  📊 View Reports
-                </Button>
-              </Link>
-            </div>
+            {/* View Reports Link */}
+            <Link
+              href="/reports"
+              className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>View All Reports</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </motion.div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="w-full flex justify-center px-8 py-16">
+      <div className="max-w-7xl mx-auto px-6 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full max-w-6xl"
         >
-          {/* Stats Overview */}
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-black mb-4">Your Statistics</h2>
-            <p className="text-gray-600 text-lg mb-12">
-              Track your cognitive assessment journey
-            </p>
+          {/* Statistics Section */}
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 text-white">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Your Statistics
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  Track your cognitive assessment journey
+                </p>
+              </div>
+            </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
                 className="group"
               >
-                <div className="bg-white rounded-3xl p-10 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span className="text-4xl">📊</span>
+                <div className="relative bg-white rounded-2xl p-8 shadow-sm border border-slate-200/50 hover:shadow-lg hover:border-slate-300/50 transition-all duration-300">
+                  <div className="absolute top-6 right-6">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                      <BarChart3 className="w-6 h-6" />
+                    </div>
                   </div>
-                  <div className="text-6xl font-black mb-2">
-                    {testSessions.length}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+                      Total Tests
+                    </p>
+                    <p className="text-5xl font-bold text-slate-900">
+                      {testSessions.length}
+                    </p>
+                    <p className="text-sm text-slate-400">assessments taken</p>
                   </div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-gray-600">
-                    Total Tests
-                  </div>
-                  <div className="mt-4 h-2 w-24 bg-black rounded-full mx-auto"></div>
                 </div>
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
                 className="group"
               >
-                <div className="bg-white rounded-3xl p-10 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span className="text-4xl">✅</span>
+                <div className="relative bg-white rounded-2xl p-8 shadow-sm border border-slate-200/50 hover:shadow-lg hover:border-slate-300/50 transition-all duration-300">
+                  <div className="absolute top-6 right-6">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                      <CheckCircle2 className="w-6 h-6" />
+                    </div>
                   </div>
-                  <div className="text-6xl font-black mb-2 text-black">
-                    {completedTests.length}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+                      Completed
+                    </p>
+                    <p className="text-5xl font-bold text-emerald-600">
+                      {completedTests.length}
+                    </p>
+                    <p className="text-sm text-slate-400">tests finished</p>
                   </div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-gray-600">
-                    Completed
-                  </div>
-                  <div className="mt-4 h-2 w-24 bg-black rounded-full mx-auto"></div>
                 </div>
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
                 className="group"
               >
-                <div className="bg-white rounded-3xl p-10 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span className="text-4xl">🎯</span>
+                <div className="relative bg-white rounded-2xl p-8 shadow-sm border border-slate-200/50 hover:shadow-lg hover:border-slate-300/50 transition-all duration-300">
+                  <div className="absolute top-6 right-6">
+                    <div className="w-12 h-12 rounded-xl bg-cyan-100 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-500 group-hover:text-white transition-colors">
+                      <Target className="w-6 h-6" />
+                    </div>
                   </div>
-                  <div className="text-6xl font-black mb-2 text-red-600">
-                    {averageScore > 0 ? `${averageScore.toFixed(0)}%` : "--"}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+                      Average Score
+                    </p>
+                    <p className="text-5xl font-bold text-cyan-600">
+                      {averageScore > 0 ? `${averageScore.toFixed(0)}%` : "--"}
+                    </p>
+                    <p className="text-sm text-slate-400">
+                      overall performance
+                    </p>
                   </div>
-                  <div className="text-sm font-bold uppercase tracking-wider text-gray-600">
-                    Average Score
-                  </div>
-                  <div className="mt-4 h-2 w-24 bg-red-600 rounded-full mx-auto"></div>
                 </div>
               </motion.div>
             </div>
@@ -285,47 +351,57 @@ export default function DashboardPage() {
 
           {/* In Progress Tests */}
           {inProgressTests.length > 0 && (
-            <div className="mb-20">
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center gap-3 bg-red-50 rounded-full px-6 py-3 mb-4 shadow-md">
-                  <span className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></span>
-                  <span className="font-black text-red-600 uppercase tracking-wide">
-                    In Progress
-                  </span>
+            <div className="mb-16">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-amber-100 text-amber-600">
+                  <Clock className="w-5 h-5" />
                 </div>
-                <h2 className="text-4xl font-black">
-                  Continue Your Assessment
-                </h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    In Progress
+                  </h2>
+                  <p className="text-slate-500 text-sm">
+                    Continue where you left off
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-6 max-w-4xl mx-auto">
+              <div className="space-y-4">
                 {inProgressTests.map((test, index) => (
                   <motion.div
                     key={test.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300">
-                      <div className="flex flex-col md:flex-row md:items-center gap-6">
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200/50 hover:shadow-md transition-all">
+                      <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="text-2xl font-black">
-                              {test.testType === "VOICE" ? "🎤" : "📝"} Test #
-                              {test.id.slice(0, 8)}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white shadow-sm">
+                              {test.testType === "VOICE" ? (
+                                <Mic className="w-5 h-5 text-amber-600" />
+                              ) : (
+                                <FileText className="w-5 h-5 text-amber-600" />
+                              )}
                             </div>
-                            <span className="px-4 py-1.5 bg-red-600 text-white text-xs font-black rounded-full uppercase">
+                            <div>
+                              <h3 className="font-semibold text-slate-900">
+                                Test #{test.id.slice(0, 8)}
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                {test.testType === "VOICE"
+                                  ? "Voice Test"
+                                  : "MCQ Test"}
+                              </p>
+                            </div>
+                            <span className="ml-auto lg:ml-0 px-3 py-1 bg-amber-500 text-white text-xs font-semibold rounded-full">
                               Active
-                            </span>
-                            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
-                              {test.testType === "VOICE"
-                                ? "Voice Test"
-                                : "MCQ Test"}
                             </span>
                           </div>
 
-                          <div className="text-sm text-gray-600 mb-6 font-medium">
-                            Started:{" "}
+                          <p className="text-sm text-slate-600 mb-4">
+                            Started{" "}
                             {new Date(test.startedAt).toLocaleDateString(
                               "en-US",
                               {
@@ -334,37 +410,35 @@ export default function DashboardPage() {
                                 year: "numeric",
                               },
                             )}
-                          </div>
+                          </p>
 
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between text-sm font-bold">
-                              <span>Progress</span>
-                              <span className="text-red-600">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-slate-600">Progress</span>
+                              <span className="font-semibold text-amber-600">
                                 {test.answeredCount}/{test.totalQuestions}{" "}
                                 Questions
                               </span>
                             </div>
-                            <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div className="h-2 bg-white rounded-full overflow-hidden">
                               <div
-                                className="bg-red-600 h-3 rounded-full transition-all duration-500"
+                                className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500"
                                 style={{
-                                  width: `${
-                                    (test.answeredCount / test.totalQuestions) *
-                                    100
-                                  }%`,
+                                  width: `${(test.answeredCount / test.totalQuestions) * 100}%`,
                                 }}
-                              ></div>
+                              />
                             </div>
                           </div>
                         </div>
 
                         <Link href={`/test/${test.id}`}>
                           <Button
-                            variant="danger"
+                            variant="primary"
                             size="lg"
-                            className="text-lg px-10 whitespace-nowrap"
+                            className="whitespace-nowrap bg-amber-500 hover:bg-amber-600"
                           >
-                            Continue Test →
+                            Continue Test
+                            <ArrowRight className="w-4 h-4 ml-2" />
                           </Button>
                         </Link>
                       </div>
@@ -375,86 +449,105 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Recent Tests */}
-          <div className="mb-20">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-black mb-4">Assessment History</h2>
-              <p className="text-gray-600 text-lg">
-                Your recent cognitive assessments
-              </p>
+          {/* Assessment History */}
+          <div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-900 text-white">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Assessment History
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  Your recent cognitive assessments
+                </p>
+              </div>
             </div>
 
             {testSessions.length === 0 ? (
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-gray-50 rounded-3xl p-16 text-center shadow-lg">
-                  <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
-                    <span className="text-6xl">🧠</span>
-                  </div>
-                  <h3 className="text-3xl font-black mb-4">
-                    No Assessments Yet
-                  </h3>
-                  <p className="text-lg text-gray-600 mb-8">
-                    Start your first cognitive assessment to track your mental
-                    wellbeing
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button
-                      variant="danger"
-                      size="lg"
-                      onClick={() => createNewTest("MCQ")}
-                      isLoading={isCreatingMCQ}
-                      className="text-lg px-10"
-                    >
-                      📝 MCQ Test
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="lg"
-                      onClick={() => createNewTest("VOICE")}
-                      isLoading={isCreatingVoice}
-                      className="text-lg px-10"
-                    >
-                      🎤 Voice Test
-                    </Button>
-                  </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-2xl p-12 text-center border border-slate-200/50"
+              >
+                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Brain className="w-10 h-10 text-slate-400" />
                 </div>
-              </div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3">
+                  No Assessments Yet
+                </h3>
+                <p className="text-slate-500 mb-8 max-w-md mx-auto">
+                  Start your first cognitive assessment to track your mental
+                  wellbeing and monitor your progress over time.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={() => createNewTest("MCQ")}
+                    isLoading={isCreatingMCQ}
+                    className="bg-slate-900 hover:bg-slate-800"
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Start MCQ Test
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={() => createNewTest("VOICE")}
+                    isLoading={isCreatingVoice}
+                  >
+                    <Mic className="w-4 h-4 mr-2" />
+                    Start Voice Test
+                  </Button>
+                </div>
+              </motion.div>
             ) : (
-              <div className="space-y-6 max-w-4xl mx-auto">
+              <div className="space-y-4">
                 {testSessions.slice(0, 5).map((test, index) => (
                   <motion.div
                     key={test.id}
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 + index * 0.1 }}
                   >
-                    <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/50 hover:shadow-md hover:border-slate-300/50 transition-all">
+                      <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-4">
-                            <span className="text-2xl font-black">
-                              {test.testType === "VOICE" ? "🎤" : "📝"} #
-                              {test.id.slice(0, 8)}
-                            </span>
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                              {test.testType === "VOICE" ? (
+                                <Mic className="w-5 h-5 text-slate-600" />
+                              ) : (
+                                <FileText className="w-5 h-5 text-slate-600" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-slate-900">
+                                #{test.id.slice(0, 8)}
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                {test.testType === "VOICE"
+                                  ? "Voice Test"
+                                  : "MCQ Test"}
+                              </p>
+                            </div>
                             <span
-                              className={`px-4 py-1.5 text-xs font-black rounded-full uppercase ${
+                              className={`px-3 py-1 text-xs font-semibold rounded-full ${
                                 test.status === "COMPLETED"
-                                  ? "bg-black text-white"
-                                  : "bg-red-600 text-white"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-amber-100 text-amber-700"
                               }`}
                             >
                               {test.status === "COMPLETED"
                                 ? "Completed"
                                 : "In Progress"}
                             </span>
-                            <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-full">
-                              {test.testType === "VOICE"
-                                ? "Voice Test"
-                                : "MCQ Test"}
-                            </span>
                           </div>
 
-                          <div className="text-sm text-gray-600 mb-4 font-medium">
+                          <p className="text-sm text-slate-500 mb-4">
                             {new Date(test.startedAt).toLocaleDateString(
                               "en-US",
                               {
@@ -463,39 +556,39 @@ export default function DashboardPage() {
                                 year: "numeric",
                               },
                             )}
-                          </div>
+                          </p>
 
                           {test.report && (
-                            <div className="flex flex-wrap items-center gap-6">
+                            <div className="flex items-center gap-6">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center">
-                                  <span className="text-white font-black text-sm">
+                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+                                  <span className="text-white font-bold text-sm">
                                     {test.report.overallScore.toFixed(0)}%
                                   </span>
                                 </div>
                                 <div>
-                                  <div className="text-xs font-bold text-gray-500 uppercase">
+                                  <p className="text-xs text-slate-500 uppercase tracking-wider">
                                     Score
-                                  </div>
-                                  <div className="text-lg font-black">
+                                  </p>
+                                  <p className="font-semibold text-slate-900">
                                     {test.report.overallScore.toFixed(1)}%
-                                  </div>
+                                  </p>
                                 </div>
                               </div>
 
-                              <div className="h-12 w-px bg-gray-300"></div>
+                              <div className="h-10 w-px bg-slate-200" />
 
                               <div>
-                                <div className="text-xs font-bold text-gray-500 uppercase mb-1">
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">
                                   Risk Level
-                                </div>
+                                </p>
                                 <span
-                                  className={`inline-block px-4 py-2 text-sm font-black rounded-full ${
+                                  className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
                                     test.report.riskLevel === "LOW"
-                                      ? "bg-black text-white"
+                                      ? "bg-emerald-100 text-emerald-700"
                                       : test.report.riskLevel === "MODERATE"
-                                        ? "bg-gray-800 text-white"
-                                        : "bg-red-600 text-white"
+                                        ? "bg-amber-100 text-amber-700"
+                                        : "bg-red-100 text-red-700"
                                   }`}
                                 >
                                   {test.report.riskLevel}
@@ -509,11 +602,12 @@ export default function DashboardPage() {
                           {test.status === "IN_PROGRESS" ? (
                             <Link href={`/test/${test.id}`}>
                               <Button
-                                variant="danger"
+                                variant="primary"
                                 size="lg"
                                 className="whitespace-nowrap"
                               >
-                                Continue →
+                                Continue
+                                <ArrowRight className="w-4 h-4 ml-2" />
                               </Button>
                             </Link>
                           ) : test.report ? (

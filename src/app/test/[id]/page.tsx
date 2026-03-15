@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Mic,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Flag,
+  CheckCircle2,
+  Circle,
+  Loader2,
+  Brain,
+} from "lucide-react";
 
 interface Question {
   id: string;
@@ -61,7 +72,6 @@ export default function TestPage({
       );
       setSelectedAnswer(existingAnswer?.userAnswer || "");
       setIsCurrentAnswerSubmitted(!!existingAnswer);
-      // Reset voice data when switching questions
       setAudioData(null);
       setHasAudioRecording(false);
     }
@@ -105,7 +115,6 @@ export default function TestPage({
     const currentQuestion = testSession.questions[currentIndex];
     const isVoiceQuestion = currentQuestion.questionType === "VOICE_ANSWER";
 
-    // Validate based on question type
     if (isVoiceQuestion && !audioData) return;
     if (!isVoiceQuestion && !selectedAnswer) return;
 
@@ -130,7 +139,6 @@ export default function TestPage({
         throw new Error("Failed to save answer");
       }
 
-      // Update local state
       const updatedAnswers = testSession.answers.filter(
         (a) => a.questionId !== currentQuestion.id,
       );
@@ -145,10 +153,7 @@ export default function TestPage({
         answeredCount: updatedAnswers.length,
       });
 
-      // Mark as submitted
       setIsCurrentAnswerSubmitted(true);
-
-      // Reset start time for next question
       setStartTime(Date.now());
     } catch (error) {
       console.error("Failed to save answer:", error);
@@ -201,8 +206,13 @@ export default function TestPage({
 
   if (isLoading || !testSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl font-bold">Loading test...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Brain className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-slate-600 font-medium">Loading assessment...</p>
+        </div>
       </div>
     );
   }
@@ -212,24 +222,37 @@ export default function TestPage({
   const isLastQuestion = currentIndex === testSession.questions.length - 1;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
       {/* Progress Header */}
-      <div className="bg-black text-white py-6">
-        <div className="w-full flex justify-center px-8">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-6 relative overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+        <div className="w-full flex justify-center px-6 md:px-8 relative z-10">
           <div className="w-full max-w-4xl">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-black">
-                  {testSession.testType === "VOICE" ? "🎤 Voice" : "📝 MCQ"}{" "}
-                  Assessment
-                </h1>
-                <p className="text-sm text-gray-300 mt-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-xl flex items-center justify-center">
+                    {testSession.testType === "VOICE" ? (
+                      <Mic className="w-5 h-5 text-white" />
+                    ) : (
+                      <FileText className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+                  <h1 className="text-xl md:text-2xl font-bold">
+                    {testSession.testType === "VOICE" ? "Voice" : "MCQ"}{" "}
+                    Assessment
+                  </h1>
+                </div>
+                <p className="text-sm text-slate-400 ml-13">
                   {testSession.testType === "VOICE"
                     ? "Answer questions using your voice"
                     : "Select the best answer for each question"}
                 </p>
               </div>
-              <div className="text-sm font-bold bg-white/20 px-4 py-2 rounded-full">
+              <div className="text-sm font-semibold bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
                 {currentIndex + 1} / {testSession.totalQuestions}
               </div>
             </div>
@@ -239,28 +262,36 @@ export default function TestPage({
       </div>
 
       {/* Main Content */}
-      <div className="w-full flex justify-center px-8 py-12">
+      <div className="w-full flex justify-center px-6 md:px-8 py-8 md:py-12">
         <div className="w-full max-w-4xl">
           {/* Question Card */}
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
+              exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="bg-white rounded-3xl p-10 shadow-lg mb-8">
+              <div className="bg-white rounded-2xl p-6 md:p-10 shadow-sm border border-slate-200/60 mb-6">
                 <div className="flex items-center gap-3 mb-6">
-                  <span className="px-4 py-2 bg-black text-white text-xs font-black rounded-full uppercase">
+                  <span className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-xs font-semibold rounded-full uppercase tracking-wide">
                     {currentQuestion.category.replace("_", " ")}
                   </span>
-                  <span className="px-4 py-2 bg-gray-100 text-black text-xs font-black rounded-full uppercase">
+                  <span
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-full uppercase tracking-wide ${
+                      currentQuestion.difficulty === "EASY"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : currentQuestion.difficulty === "MEDIUM"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-rose-50 text-rose-700"
+                    }`}
+                  >
                     {currentQuestion.difficulty}
                   </span>
                 </div>
 
-                <h2 className="text-3xl font-black mb-8 leading-tight">
+                <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-8 leading-relaxed">
                   {currentQuestion.questionText}
                 </h2>
 
@@ -275,28 +306,34 @@ export default function TestPage({
                   />
                 ) : (
                   /* Multiple Choice Options */
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {currentQuestion.options.map((option, idx) => (
                       <button
                         key={idx}
                         onClick={() => setSelectedAnswer(option)}
-                        className={`w-full text-left p-6 rounded-2xl transition-all duration-300 ${
+                        className={`w-full text-left p-5 rounded-xl transition-all duration-200 ${
                           selectedAnswer === option
-                            ? "bg-black text-white shadow-xl scale-[1.02]"
-                            : "bg-white border-2 border-gray-300 hover:border-black hover:shadow-lg"
+                            ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/20"
+                            : "bg-slate-50 border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50"
                         }`}
                       >
                         <div className="flex items-start gap-4">
                           <span
-                            className={`font-black text-lg shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                            className={`font-bold text-sm shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
                               selectedAnswer === option
-                                ? "bg-white text-black"
-                                : "bg-black text-white"
+                                ? "bg-white/20 text-white"
+                                : "bg-slate-200 text-slate-600"
                             }`}
                           >
                             {String.fromCharCode(65 + idx)}
                           </span>
-                          <span className="text-lg leading-relaxed">
+                          <span
+                            className={`text-base leading-relaxed ${
+                              selectedAnswer === option
+                                ? "text-white"
+                                : "text-slate-700"
+                            }`}
+                          >
                             {option}
                           </span>
                         </div>
@@ -309,7 +346,7 @@ export default function TestPage({
           </AnimatePresence>
 
           {/* Answer Submission */}
-          <div className="mb-8">
+          <div className="mb-6">
             <Button
               variant={isCurrentAnswerSubmitted ? "secondary" : "danger"}
               onClick={saveAnswer}
@@ -323,34 +360,44 @@ export default function TestPage({
               isLoading={isSavingAnswer}
               loadingText="Submitting..."
               size="lg"
-              className="w-full text-lg"
+              className={`w-full text-lg ${
+                isCurrentAnswerSubmitted
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+                  : "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white border-0"
+              }`}
             >
-              {isCurrentAnswerSubmitted
-                ? "✓ Answer Submitted"
-                : "Submit Answer"}
+              {isCurrentAnswerSubmitted ? (
+                <span className="flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" />
+                  Answer Submitted
+                </span>
+              ) : (
+                "Submit Answer"
+              )}
             </Button>
           </div>
 
           {/* Navigation */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
             <Button
               variant="secondary"
               onClick={handlePrevious}
               disabled={currentIndex === 0}
               size="lg"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
             >
-              ← Previous
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous
             </Button>
 
-            <div className="text-center">
-              <div className="text-sm font-bold text-gray-500 uppercase mb-1">
+            <div className="text-center px-6 py-3 bg-white rounded-xl border border-slate-200">
+              <div className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
                 Progress
               </div>
-              <div className="text-2xl font-black">
+              <div className="text-2xl font-bold text-slate-800">
                 {testSession.answeredCount} / {testSession.totalQuestions}
               </div>
-              <div className="text-xs text-gray-500">Questions Answered</div>
+              <div className="text-xs text-slate-500">Questions Answered</div>
             </div>
 
             {isLastQuestion ? (
@@ -360,26 +407,34 @@ export default function TestPage({
                 disabled={isSubmitting}
                 isLoading={isSubmitting}
                 size="lg"
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white border-0"
               >
-                🏁 Finish Test
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Flag className="w-4 h-4 mr-2" />
+                )}
+                Finish Test
               </Button>
             ) : (
               <Button
                 variant="secondary"
                 onClick={handleNext}
                 size="lg"
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
               >
-                Next →
+                Next
+                <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             )}
           </div>
 
           {/* Question Navigator */}
-          <div className="bg-white rounded-3xl p-8 shadow-lg">
-            <h3 className="text-2xl font-black mb-6">Question Navigator</h3>
-            <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
+          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200/60">
+            <h3 className="text-lg font-bold text-slate-800 mb-6">
+              Question Navigator
+            </h3>
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
               {testSession.questions.map((q, idx) => {
                 const isAnswered = testSession.answers.some(
                   (a) => a.questionId === q.id,
@@ -390,12 +445,12 @@ export default function TestPage({
                   <button
                     key={q.id}
                     onClick={() => setCurrentIndex(idx)}
-                    className={`aspect-square flex items-center justify-center text-sm font-black rounded-xl transition-all duration-300 ${
+                    className={`aspect-square flex items-center justify-center text-sm font-semibold rounded-lg transition-all duration-200 ${
                       isCurrent
-                        ? "bg-red-600 text-white shadow-lg scale-110"
+                        ? "bg-gradient-to-br from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/30 scale-110"
                         : isAnswered
-                          ? "bg-black text-white hover:shadow-lg"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-md"
+                          ? "bg-slate-800 text-white hover:bg-slate-700"
+                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                     }`}
                   >
                     {idx + 1}
@@ -404,18 +459,18 @@ export default function TestPage({
               })}
             </div>
 
-            <div className="flex items-center justify-center gap-6 mt-8 pt-6 border-t-2 border-gray-200">
+            <div className="flex items-center justify-center gap-6 mt-6 pt-6 border-t border-slate-200">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-red-600 rounded-lg"></div>
-                <span className="text-sm font-medium">Current</span>
+                <div className="w-5 h-5 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-md" />
+                <span className="text-sm text-slate-600">Current</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-black rounded-lg"></div>
-                <span className="text-sm font-medium">Answered</span>
+                <div className="w-5 h-5 bg-slate-800 rounded-md" />
+                <span className="text-sm text-slate-600">Answered</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-100 border-2 border-gray-300 rounded-lg"></div>
-                <span className="text-sm font-medium">Unanswered</span>
+                <div className="w-5 h-5 bg-slate-100 border border-slate-300 rounded-md" />
+                <span className="text-sm text-slate-600">Unanswered</span>
               </div>
             </div>
           </div>
