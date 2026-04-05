@@ -19,15 +19,19 @@ export async function POST(req: NextRequest) {
     }
 
     const { numberOfQuestions = 20, testType = "MCQ" } = await req.json();
+    const effectiveQuestionCount =
+      testType === "VOICE" ? 7 : Number(numberOfQuestions) || 20;
+
     console.log("Requested number of questions:", numberOfQuestions);
     console.log("Test type:", testType);
+    console.log("Effective question count:", effectiveQuestionCount);
 
     // Generate questions using Gemini
     console.log("Generating questions with Gemini...");
     let generatedQuestions;
     try {
       generatedQuestions = await generateCognitiveTest(
-        numberOfQuestions,
+        effectiveQuestionCount,
         testType,
       );
       console.log("Generated questions:", generatedQuestions.length);

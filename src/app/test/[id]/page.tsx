@@ -18,6 +18,9 @@ import {
   Brain,
 } from "lucide-react";
 
+const MCQ_QUESTION_PREVIEW_SECONDS = 20;
+const VOICE_QUESTION_PREVIEW_SECONDS = 20;
+
 interface Question {
   id: string;
   questionType: string;
@@ -55,6 +58,10 @@ export default function TestPage({
   const [startTime, setStartTime] = useState(Date.now());
   const [audioData, setAudioData] = useState<string | null>(null);
   const [hasAudioRecording, setHasAudioRecording] = useState(false);
+  const [isQuestionPreviewPhase, setIsQuestionPreviewPhase] = useState(false);
+  const [previewSecondsLeft, setPreviewSecondsLeft] = useState(
+    MCQ_QUESTION_PREVIEW_SECONDS,
+  );
 
   useEffect(() => {
     fetchTestSession();
@@ -76,6 +83,44 @@ export default function TestPage({
       setHasAudioRecording(false);
     }
   }, [currentIndex, testSession]);
+
+  useEffect(() => {
+    if (!testSession || !testSession.questions[currentIndex]) return;
+
+    const currentQuestion = testSession.questions[currentIndex];
+    const isTimedMcqQuestion =
+      testSession.testType === "MCQ" &&
+      currentQuestion.questionType !== "VOICE_ANSWER";
+    const isTimedVoiceQuestion =
+      testSession.testType === "VOICE" &&
+      currentQuestion.questionType === "VOICE_ANSWER";
+    const isTimedQuestion = isTimedMcqQuestion || isTimedVoiceQuestion;
+    const previewDuration = isTimedMcqQuestion
+      ? MCQ_QUESTION_PREVIEW_SECONDS
+      : VOICE_QUESTION_PREVIEW_SECONDS;
+
+    if (!isTimedQuestion) {
+      setIsQuestionPreviewPhase(false);
+      return;
+    }
+
+    setIsQuestionPreviewPhase(true);
+    setPreviewSecondsLeft(previewDuration);
+
+    const intervalId = setInterval(() => {
+      setPreviewSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    const timeoutId = setTimeout(() => {
+      setIsQuestionPreviewPhase(false);
+      clearInterval(intervalId);
+    }, previewDuration * 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [currentIndex, testSession?.questions, testSession?.testType]);
 
   const fetchTestSession = async () => {
     try {
@@ -220,6 +265,16 @@ export default function TestPage({
   const currentQuestion = testSession.questions[currentIndex];
   const progress = ((currentIndex + 1) / testSession.totalQuestions) * 100;
   const isLastQuestion = currentIndex === testSession.questions.length - 1;
+  const isTimedMcqQuestion =
+    testSession.testType === "MCQ" &&
+    currentQuestion.questionType !== "VOICE_ANSWER";
+  const isTimedVoiceQuestion =
+    testSession.testType === "VOICE" &&
+    currentQuestion.questionType === "VOICE_ANSWER";
+  const showQuestionText =
+    !(isTimedMcqQuestion || isTimedVoiceQuestion) || isQuestionPreviewPhase;
+  const showOptions = !isTimedMcqQuestion || !isQuestionPreviewPhase;
+  const showVoiceRecorder = !isTimedVoiceQuestion || !isQuestionPreviewPhase;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
@@ -291,20 +346,33 @@ export default function TestPage({
                   </span>
                 </div>
 
-                <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-8 leading-relaxed">
-                  {currentQuestion.questionText}
-                </h2>
+                {showQuestionText && (
+                  <h2 className="text-xl md:text-2xl font-bold text-slate-800 mb-8 leading-relaxed">
+                    {currentQuestion.questionText}
+                  </h2>
+                )}
+
+                {(isTimedMcqQuestion || isTimedVoiceQuestion) &&
+                  isQuestionPreviewPhase && (
+                    <p className="text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3 mb-6">
+                      {isTimedMcqQuestion
+                        ? `Memorize this question. Options will appear in ${previewSecondsLeft}s.`
+                        : `Memorize this question. Recording will start in ${previewSecondsLeft}s.`}
+                    </p>
+                  )}
 
                 {/* Voice Question */}
                 {currentQuestion.questionType === "VOICE_ANSWER" ? (
-                  <VoiceRecorder
-                    onRecordingComplete={(blob, base64) => {
-                      setAudioData(base64);
-                      setHasAudioRecording(true);
-                    }}
-                    disabled={isCurrentAnswerSubmitted}
-                  />
-                ) : (
+                  showVoiceRecorder ? (
+                    <VoiceRecorder
+                      onRecordingComplete={(blob, base64) => {
+                        setAudioData(base64);
+                        setHasAudioRecording(true);
+                      }}
+                      disabled={isCurrentAnswerSubmitted}
+                    />
+                  ) : null
+                ) : showOptions ? (
                   /* Multiple Choice Options */
                   <div className="space-y-3">
                     {currentQuestion.options.map((option, idx) => (
@@ -340,7 +408,7 @@ export default function TestPage({
                       </button>
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
             </motion.div>
           </AnimatePresence>

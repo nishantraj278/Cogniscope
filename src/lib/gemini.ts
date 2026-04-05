@@ -15,9 +15,44 @@ console.log("🔑 First 10 chars:", GEMINI_API_KEY?.substring(0, 10) || "N/A");
 
 // Initialize Gemini AI
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
-const MODEL = "gemini-1.5-flash";
+const MODEL_CANDIDATES = [
+  process.env.GEMINI_MODEL?.trim(),
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash-8b",
+].filter((model): model is string => Boolean(model));
 
 console.log("🤖 Gemini AI initialized:", genAI ? "✅ YES" : "❌ NO");
+console.log("🤖 Gemini model candidates:", MODEL_CANDIDATES.join(", "));
+
+async function generateContentWithModelFallback(
+  prompt: string,
+): Promise<string> {
+  if (!genAI) {
+    throw new Error("Gemini client not initialized");
+  }
+
+  let lastError: unknown;
+
+  for (const modelName of MODEL_CANDIDATES) {
+    try {
+      console.log(`Calling Gemini with model: ${modelName}`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      lastError = error;
+      console.warn(
+        `Gemini model failed (${modelName}):`,
+        error instanceof Error ? error.message : error,
+      );
+    }
+  }
+
+  throw lastError ?? new Error("All Gemini model candidates failed");
+}
 
 // Types for Gemini responses
 export interface GeneratedQuestion {
@@ -132,11 +167,7 @@ Example format:
     }
 
     console.log("Calling Gemini API to generate questions...");
-    const model = genAI.getGenerativeModel({ model: MODEL });
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateContentWithModelFallback(prompt);
     console.log("Gemini API response received, length:", text.length);
 
     // Clean the response to extract JSON
@@ -502,11 +533,7 @@ Return ONLY valid JSON, no additional text.`;
     }
 
     console.log("Calling Gemini API to evaluate test...");
-    const model = genAI.getGenerativeModel({ model: MODEL });
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateContentWithModelFallback(prompt);
 
     // Clean the response to extract JSON
     const jsonMatch = text.match(/\{[\s\S]*\}/);

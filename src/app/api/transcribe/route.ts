@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /**
  * Speech-to-Text API endpoint
@@ -23,50 +24,89 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // For now, we'll use a placeholder transcription
-    // In production, you would integrate with:
-    // - Google Cloud Speech-to-Text
-    // - OpenAI Whisper API
-    // - Azure Speech Services
-    // - AWS Transcribe
-
-    // Example integration with OpenAI Whisper (requires API key):
-    /*
-    try {
-      // Convert base64 to buffer
-      const audioBuffer = Buffer.from(audioData.split(',')[1], 'base64');
-      
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', new Blob([audioBuffer]), 'audio.webm');
-      formData.append('model', 'whisper-1');
-
-      // Call OpenAI Whisper API
-      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: formData,
-      });
-
-      const result = await response.json();
-      return NextResponse.json({
-        transcribedText: result.text,
-        confidence: 0.95,
-      });
-    } catch (error) {
-      console.error('Transcription error:', error);
-      throw error;
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY is not configured" },
+        { status: 503 },
+      );
     }
-    */
 
-    // Placeholder response for demo purposes
+    const dataUrlMatch = String(audioData).match(
+      /^data:(audio\/[\w.+-]+);base64,(.+)$/,
+    );
+
+    if (!dataUrlMatch) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid audioData format. Expected data URL like data:audio/webm;base64,...",
+        },
+        { status: 400 },
+      );
+    }
+
+    const mimeType = dataUrlMatch[1];
+    const base64Payload = dataUrlMatch[2];
+    const audioBuffer = Buffer.from(base64Payload, "base64");
+
+    if (!audioBuffer.length) {
+      return NextResponse.json(
+        { error: "Audio payload is empty" },
+        { status: 400 },
+      );
+    }
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const modelCandidates = [
+      process.env.GEMINI_MODEL?.trim(),
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-1.5-flash-latest",
+    ].filter((model): model is string => Boolean(model));
+
+    let lastError: unknown;
+    let transcribedText = "";
+    let selectedModel = "";
+
+    for (const modelName of modelCandidates) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent([
+          {
+            text: "Transcribe this audio exactly. Return only the transcript text with no extra commentary.",
+          },
+          {
+            inlineData: {
+              mimeType,
+              data: base64Payload,
+            },
+          },
+        ]);
+
+        transcribedText = (await result.response.text()).trim();
+        selectedModel = modelName;
+        break;
+      } catch (error) {
+        lastError = error;
+        console.warn(
+          `Gemini transcription model failed (${modelName}):`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+
+    if (!selectedModel) {
+      throw (
+        lastError ??
+        new Error("All Gemini transcription model candidates failed")
+      );
+    }
+
     return NextResponse.json({
-      transcribedText:
-        "[Audio transcription will be available once STT service is configured]",
-      confidence: 0.0,
-      note: "To enable transcription, configure a speech-to-text service in this API endpoint",
+      transcribedText,
+      confidence: null,
+      provider: "gemini",
+      model: selectedModel,
     });
   } catch (error) {
     console.error("Error transcribing audio:", error);
