@@ -56,6 +56,8 @@ export default function ReportsPage() {
         return "bg-amber-50 text-amber-700 border-amber-200";
       case "HIGH":
         return "bg-rose-50 text-rose-700 border-rose-200";
+      case "CRITICAL":
+        return "bg-red-50 text-red-800 border-red-300";
       default:
         return "bg-slate-50 text-slate-700 border-slate-200";
     }

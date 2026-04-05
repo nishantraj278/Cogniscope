@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { motion } from "framer-motion";
 import {
   FileText,
@@ -19,6 +20,10 @@ import {
   Target,
   Loader2,
   TrendingUp,
+  MapPin,
+  Phone,
+  Globe,
+  Navigation,
 } from "lucide-react";
 
 interface Report {
@@ -47,6 +52,16 @@ interface Report {
   };
 }
 
+interface PsychiatristResult {
+  id: string;
+  name: string;
+  address: string;
+  distanceKm: number;
+  phone: string | null;
+  website: string | null;
+  osmUrl: string;
+}
+
 export default function ReportDetailPage({
   params,
 }: {
@@ -56,6 +71,15 @@ export default function ReportDetailPage({
   const router = useRouter();
   const [report, setReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [locationQuery, setLocationQuery] = useState("");
+  const [psychiatristResults, setPsychiatristResults] = useState<
+    PsychiatristResult[]
+  >([]);
+  const [isSearchingPsychiatrists, setIsSearchingPsychiatrists] =
+    useState(false);
+  const [psychiatristSearchError, setPsychiatristSearchError] = useState("");
+  const [hasSearchedPsychiatrists, setHasSearchedPsychiatrists] =
+    useState(false);
 
   useEffect(() => {
     fetchReport();
@@ -99,8 +123,46 @@ export default function ReportDetailPage({
         return "bg-amber-500 text-white";
       case "HIGH":
         return "bg-rose-500 text-white";
+      case "CRITICAL":
+        return "bg-red-700 text-white";
       default:
         return "bg-slate-500 text-white";
+    }
+  };
+
+  const fetchNearbyPsychiatrists = async () => {
+    if (!locationQuery.trim()) {
+      setPsychiatristSearchError("Please enter a location to continue.");
+      return;
+    }
+
+    try {
+      setIsSearchingPsychiatrists(true);
+      setPsychiatristSearchError("");
+      setHasSearchedPsychiatrists(true);
+
+      const response = await fetch(
+        `/api/psychiatrists?location=${encodeURIComponent(locationQuery.trim())}`,
+      );
+      const data = (await response.json()) as {
+        results?: PsychiatristResult[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to search psychiatrists.");
+      }
+
+      setPsychiatristResults(data.results || []);
+    } catch (error) {
+      setPsychiatristResults([]);
+      setPsychiatristSearchError(
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch psychiatrists. Please try again.",
+      );
+    } finally {
+      setIsSearchingPsychiatrists(false);
     }
   };
 
@@ -414,6 +476,106 @@ export default function ReportDetailPage({
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {report.riskLevel === "CRITICAL" && (
+            <div className="bg-red-50 rounded-2xl border border-red-200 p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-red-900 mb-3 flex items-center gap-3">
+                <MapPin className="w-6 h-6 text-red-700" />
+                Find Psychiatric Support Near You
+              </h2>
+              <p className="text-red-800 mb-6 leading-relaxed">
+                Your report is marked as CRITICAL. Enter your location to get
+                nearby psychiatrists. If you feel unsafe or in immediate danger,
+                contact local emergency services right away.
+              </p>
+
+              <div className="flex flex-col md:flex-row gap-3 mb-4">
+                <Input
+                  placeholder="Enter city, area, or postal code"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  className="rounded-xl border-red-300 focus:ring-red-500 focus:border-red-500"
+                />
+                <Button
+                  variant="danger"
+                  onClick={fetchNearbyPsychiatrists}
+                  isLoading={isSearchingPsychiatrists}
+                  loadingText="Searching..."
+                  className="md:w-auto"
+                >
+                  Search
+                </Button>
+              </div>
+
+              {psychiatristSearchError && (
+                <p className="text-sm text-red-700 mb-4">
+                  {psychiatristSearchError}
+                </p>
+              )}
+
+              {hasSearchedPsychiatrists && !isSearchingPsychiatrists && (
+                <div className="space-y-3">
+                  {psychiatristResults.length === 0 ? (
+                    <p className="text-sm text-red-800">
+                      No psychiatrists found for this location. Try a nearby
+                      city or region.
+                    </p>
+                  ) : (
+                    psychiatristResults.map((doctor, idx) => (
+                      <div
+                        key={doctor.id}
+                        className="bg-white border border-red-100 rounded-xl p-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="font-semibold text-slate-900">
+                              {idx + 1}. {doctor.name}
+                            </p>
+                            <p className="text-sm text-slate-600 mt-1 flex items-start gap-2">
+                              <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-slate-500" />
+                              <span>{doctor.address}</span>
+                            </p>
+                            <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-700">
+                              <span className="inline-flex items-center gap-1">
+                                <Navigation className="w-4 h-4 text-slate-500" />
+                                {doctor.distanceKm.toFixed(1)} km away
+                              </span>
+                              {doctor.phone && (
+                                <span className="inline-flex items-center gap-1">
+                                  <Phone className="w-4 h-4 text-slate-500" />
+                                  {doctor.phone}
+                                </span>
+                              )}
+                              {doctor.website && (
+                                <a
+                                  href={doctor.website}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-red-700 hover:text-red-800 font-medium"
+                                >
+                                  <Globe className="w-4 h-4" />
+                                  Website
+                                </a>
+                              )}
+                            </div>
+                          </div>
+
+                          <a
+                            href={doctor.osmUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm font-semibold text-red-700 hover:text-red-800 whitespace-nowrap"
+                          >
+                            Open Map
+                          </a>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           )}
 
