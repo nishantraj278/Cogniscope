@@ -19,8 +19,8 @@ const MODEL_CANDIDATES = [
   process.env.GEMINI_MODEL?.trim(),
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-flash-8b",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
 ].filter((model): model is string => Boolean(model));
 
 console.log("🤖 Gemini AI initialized:", genAI ? "✅ YES" : "❌ NO");

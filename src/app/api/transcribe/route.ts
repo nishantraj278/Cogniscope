@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       process.env.GEMINI_MODEL?.trim(),
       "gemini-2.5-flash",
       "gemini-2.0-flash",
-      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash",
     ].filter((model): model is string => Boolean(model));
 
     let lastError: unknown;

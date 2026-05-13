@@ -46,7 +46,7 @@ async function transcribeWithGemini(audioData: string): Promise<string> {
     process.env.GEMINI_MODEL?.trim(),
     "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
   ].filter((model): model is string => Boolean(model));
 
   let lastError: unknown;
@@ -105,7 +105,7 @@ async function evaluateVoiceAnswer(
     process.env.GEMINI_MODEL?.trim(),
     "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash",
   ].filter((model): model is string => Boolean(model));
 
   const prompt = `You are grading a cognitive voice-test response.
